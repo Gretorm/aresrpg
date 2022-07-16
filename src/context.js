@@ -14,6 +14,7 @@ import player_experience, {
 import player_attributes from './player/attributes.js'
 import player_health from './player/health.js'
 import player_fall_damage from './player/fall_damage.js'
+import player_sneak from './player/sneak.js'
 import player_position from './player/position.js'
 import player_view_distance, { inside_view } from './player/view_distance.js'
 import player_chat from './player/chat.js'
@@ -126,7 +127,7 @@ const initial_state = {
   health: 40,
   // player's energy, losing after each death
   soul: 100,
-
+  sneaking: false,
   // last time the player joined,
   // can be used for example to calcule regenerated soul while offline
   last_connection_time: undefined,
@@ -202,6 +203,7 @@ function reduce_state(state, action) {
     /* Reducers that map the incomming actions (packet, ...)
      * to a new state */
     player_position.reduce,
+    player_sneak.reduce,
     player_view_distance.reduce,
     plugin_channels.reduce,
     player_deal_damage.reduce,
@@ -248,6 +250,7 @@ export async function observe_client(context) {
   player_attributes.observe(context)
   player_experience.observe(context)
   player_traders.observe(context)
+  player_sneak.observe(context)
   player_statistics.observe(context)
   player_fall_damage.observe(context)
   player_health.observe(context)

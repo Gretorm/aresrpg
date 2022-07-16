@@ -6,7 +6,6 @@ import { aiter } from 'iterator-helper'
 import { chunk_position, chunk_index, same_chunk } from '../chunk.js'
 import { abortable } from '../iterator.js'
 import { Context, World } from '../events.js'
-
 function insert(array, value) {
   const nullIdx = array.indexOf(null)
 
@@ -28,10 +27,9 @@ function to_angle(raw) {
 }
 
 export default {
-  observe({ world, client, events, inside_view, signal }) {
+  observe({ world, get_state, client, events, inside_view, signal }) {
     const player_stream = new PassThrough({ objectMode: true })
     client.once('end', () => player_stream.end())
-
     const on_player = player => {
       if (player.UUID !== client.uuid && inside_view(player.position)) {
         player_stream.write({
@@ -77,6 +75,55 @@ export default {
         }
         return position
       })
+    /* aiter(abortable(on(events, Context.STATE, { signal })))
+      .map(([{ sneaking }]) => sneaking)
+      .reduce((last_sneaking, sneaking) => {
+        const state = get_state()
+        const position = state.position
+        
+        if(last_sneaking != sneaking){
+          const sneak = sneaking => ({
+            UUID: client.uuid,
+            name: client.username,
+            properties: client.profile?.properties ?? [],
+            gamemode: 2,
+            ping: client.latency,
+            position,
+          })
+      
+          const add_player = info => {
+            client.write('entity_metadata', {
+              entityId: 0,
+              metadata: [info],
+            })
+          }
+      
+          const on_player = info => {
+            // Add player to tab list
+            world.events.emit(World.ADD_PLAYER(client.uuid), info)
+            if (info.UUID !== client.uuid) {
+              // Send my info to new player
+              world.events.emit(
+                World.ADD_PLAYER(info.UUID),
+                player_info(get_state().position)
+              )
+            }
+          }
+      
+          client.once('end', () => {
+            world.events.off(World.ADD_PLAYER(client.uuid), add_player)
+            world.events.off(World.PLAYER, on_player)
+          })
+      
+          events.once(Context.STATE, ({ position }) => {
+            world.events.on(World.ADD_PLAYER(client.uuid), add_player)
+            world.events.on(World.PLAYER, on_player)
+            world.events.emit(World.PLAYER, player_info(position))
+          })
+        }
+        
+        return sneaking
+      }) */
 
     events.on(Context.CHUNK_LOADED, ({ x, z, signal }) => {
       aiter(
